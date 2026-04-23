@@ -1,5 +1,6 @@
 const mqtt = require("mqtt")
 const { Client } = require("pg")
+require("dotenv").config()
 
 // 🔹 MQTT (está en la misma EC2 pública)
 
@@ -19,10 +20,10 @@ mqttClient.on("offline", () => {
 
 // 🔹 PostgreSQL (EC2 privada)
 const pgClient = new Client({
-  host: "172.31.61.94",   // IP privada
-  user: "postgres",
-  password: "1234",       // el que seteaste
-  database: "objects_db",
+  host: process.env.PG_HOST,
+  user: process.env.PG_USER,
+  password: process.env.PG_PASSWORD,
+  database: process.env.PG_DB,
   port: 5432,
 })
 
@@ -30,7 +31,7 @@ async function start() {
   try{
   await pgClient.connect()
   console.log("Conectado a PostgreSQL")
-  
+
 } catch (err){
   console.error('Error: ', err)
 }
