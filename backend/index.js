@@ -2,6 +2,7 @@ const mqtt = require("mqtt")
 const { Client } = require("pg")
 
 // 🔹 MQTT (está en la misma EC2 pública)
+
 const mqttClient = mqtt.connect("mqtt://localhost:1883")
 
 // 🔹 PostgreSQL (EC2 privada)
@@ -14,13 +15,18 @@ const pgClient = new Client({
 })
 
 async function start() {
+  try{
   await pgClient.connect()
   console.log("Conectado a PostgreSQL")
+  console.log("mqtt client")
 
   mqttClient.on("connect", () => {
     console.log("Conectado a MQTT")
     mqttClient.subscribe("factory/height")
   })
+} catch (err){
+  console.error('Error: ', err)
+}
 
   mqttClient.on("message", async (topic, message) => {
     try {
