@@ -6,6 +6,7 @@ const { Client } = require("pg")
 const mqttClient = mqtt.connect("mqtt://localhost:1883")
 mqttClient.on("connect", () => {
   console.log("✅ MQTT conectado")
+  mqttClient.subscribe("factory/height")
 })
 
 mqttClient.on("error", (err) => {
@@ -29,12 +30,7 @@ async function start() {
   try{
   await pgClient.connect()
   console.log("Conectado a PostgreSQL")
-  console.log("mqtt client")
-
-  mqttClient.on("connect", () => {
-    console.log("Conectado a MQTT")
-    mqttClient.subscribe("factory/height")
-  })
+  
 } catch (err){
   console.error('Error: ', err)
 }
