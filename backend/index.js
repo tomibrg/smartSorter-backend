@@ -4,6 +4,17 @@ const { Client } = require("pg")
 // 🔹 MQTT (está en la misma EC2 pública)
 
 const mqttClient = mqtt.connect("mqtt://localhost:1883")
+mqttClient.on("connect", () => {
+  console.log("✅ MQTT conectado")
+})
+
+mqttClient.on("error", (err) => {
+  console.error("❌ MQTT error:", err)
+})
+
+mqttClient.on("offline", () => {
+  console.log("⚠️ MQTT offline")
+})
 
 // 🔹 PostgreSQL (EC2 privada)
 const pgClient = new Client({
