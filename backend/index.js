@@ -1,6 +1,6 @@
 const mqtt = require("mqtt")
 const { Client } = require("pg")
-const { MongoClient } = require("mongodb")
+// const { MongoClient } = require("mongodb")
 require("dotenv").config()
 
 // 🔹 MQTT (está en la misma EC2 pública)
@@ -21,8 +21,8 @@ mqttClient.on("error", (err) => {
   console.error("❌ MQTT error:", err)
 })
 
-const mongoClient = new MongoClient("mongodb://" + stringPghost + ":27017")
-let logsCollection
+// const mongoClient = new MongoClient("mongodb://" + stringPghost + ":27017")
+// let logsCollection
 
 // 🔹 PostgreSQL (EC2 privada)
 const pgClient = new Client({
@@ -35,10 +35,10 @@ const pgClient = new Client({
 
 async function start() {
   try {
-    await mongoClient.connect()
-    const db = mongoClient.db("logsDB")
-    logsCollection = db.collection("logs")
-    console.log("✅ Conectado a MongoDB")
+    // await mongoClient.connect()
+    // const db = mongoClient.db("logsDB")
+    // logsCollection = db.collection("logs")
+    // console.log("✅ Conectado a MongoDB")
 
     await pgClient.connect()
     console.log("✅ Conectado a PostgreSQL")
@@ -81,13 +81,13 @@ async function start() {
 
       console.log("Resultado:", result)
 
-      await logsCollection.insertOne({
-        objectId,
-        measuredHeight,
-        expectedHeight: expected,
-        result,
-        timestamp: new Date()
-      })
+      // await logsCollection.insertOne({
+      //   objectId,
+      //   measuredHeight,
+      //   expectedHeight: expected,
+      //   result,
+      //   timestamp: new Date()
+      // })
 
       // 📡 Publicar respuesta
       mqttClient.publish(
