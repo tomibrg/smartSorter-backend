@@ -22,7 +22,7 @@ mqttClient.on("error", (err) => {
 const mongoClient = new MongoClient("mongodb://" + process.env.PG_HOST + ":27017")
 let logsCollection
 
-const connectMongo = () => {
+const connectMongo = async () => {
   await mongoClient.connect()
   const db = mongoClient.db("logsDB")
   logsCollection = db.collection("logs")
