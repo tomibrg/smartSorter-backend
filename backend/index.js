@@ -19,7 +19,7 @@ mqttClient.on("error", (err) => {
   console.error("❌ MQTT error:", err)
 })
 
-const mongoClient = new MongoClient("mongodb://" + process.env.PG_HOST + ":27017")
+const mongoClient = new MongoClient("mongodb://" + process.env.PG_HOST.toString() + ":27017")
 let logsCollection
 
 // 🔹 PostgreSQL (EC2 privada)
