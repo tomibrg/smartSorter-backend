@@ -22,14 +22,12 @@ mqttClient.on("error", (err) => {
 const mongoClient = new MongoClient("mongodb://" + process.env.PG_HOST + ":27017")
 let logsCollection
 
-async function connectMongo() {
+const connectMongo = () => {
   await mongoClient.connect()
   const db = mongoClient.db("logsDB")
   logsCollection = db.collection("logs")
   console.log("Conectado a MongoDB")
 }
-
-await connectMongo()
 
 // 🔹 PostgreSQL (EC2 privada)
 const pgClient = new Client({
