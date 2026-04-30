@@ -4,6 +4,8 @@ const { MongoClient } = require("mongodb")
 require("dotenv").config()
 
 // 🔹 MQTT (está en la misma EC2 pública)
+const stringPghost = process.env.PG_HOST;
+console.log(stringPghost);
 
 const mqttClient = mqtt.connect("mqtt://localhost:1883")
 mqttClient.on("connect", () => {
@@ -19,7 +21,7 @@ mqttClient.on("error", (err) => {
   console.error("❌ MQTT error:", err)
 })
 
-const mongoClient = new MongoClient("mongodb://" + process.env.PG_HOST.toString() + ":27017")
+const mongoClient = new MongoClient("mongodb://" + stringPghost + ":27017")
 let logsCollection
 
 // 🔹 PostgreSQL (EC2 privada)
