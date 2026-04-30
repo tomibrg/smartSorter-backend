@@ -1,5 +1,6 @@
 const mqtt = require("mqtt")
 const { Client } = require("pg")
+const { MongoClient } = require("mongodb")
 require("dotenv").config()
 
 // 🔹 MQTT (está en la misma EC2 pública)
@@ -10,13 +11,25 @@ mqttClient.on("connect", () => {
   mqttClient.subscribe("factory/height")
 })
 
+mqttClient.on("offline", () => {
+  console.log("⚠️ MQTT offline")
+})
+
 mqttClient.on("error", (err) => {
   console.error("❌ MQTT error:", err)
 })
 
-mqttClient.on("offline", () => {
-  console.log("⚠️ MQTT offline")
-})
+const mongoClient = new MongoClient("mongodb://" + process.env.PG_HOST + ":27017")
+let logsCollection
+
+async function connectMongo() {
+  await mongoClient.connect()
+  const db = mongoClient.db("logsDB")
+  logsCollection = db.collection("logs")
+  console.log("Conectado a MongoDB")
+}
+
+await connectMongo()
 
 // 🔹 PostgreSQL (EC2 privada)
 const pgClient = new Client({
@@ -69,6 +82,14 @@ async function start() {
       const result = isValid ? "ACCEPT" : "REJECT"
 
       console.log("Resultado:", result)
+
+      await logsCollection.insertOne({
+        objectId,
+        measuredHeight,
+        expectedHeight: expected,
+        result,
+        timestamp: new Date()
+      })
 
       // 📡 Publicar respuesta
       mqttClient.publish(
