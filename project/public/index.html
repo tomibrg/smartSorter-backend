@@ -496,8 +496,9 @@
         }
 
         function addNotification(data) {
+            const uniqueId = `${data.product_id}-${Date.now()}`;
             const notification = {
-                id: data.product_id,
+                id: uniqueId,
                 height_error: data.height_error,
                 timestamp: new Date(),
                 countdown: 30,
