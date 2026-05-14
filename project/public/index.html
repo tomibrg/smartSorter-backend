@@ -1,11 +1,699 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=<device-width>, initial-scale=1.0">
-    <title>Document</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control de Calidad - Sistema RFID</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons@latest/tabler-icons.min.css">
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-tertiary: #334155;
+            --text-primary: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border-color: #475569;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .logo i {
+            font-size: 1.5rem;
+            color: var(--accent);
+        }
+
+        .connection-status {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background: var(--bg-tertiary);
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: pulse 2s infinite;
+        }
+
+        .status-dot.connected {
+            background: var(--success);
+            animation: none;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        nav {
+            display: flex;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        nav button {
+            flex: 1;
+            padding: 1rem;
+            background: transparent;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+        }
+
+        nav button:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+
+        nav button.active {
+            border-bottom-color: var(--accent);
+            color: var(--accent);
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        nav button i {
+            font-size: 1.2rem;
+        }
+
+        main {
+            flex: 1;
+            padding: 2rem;
+            overflow-y: auto;
+        }
+
+        .section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .home-section {
+            text-align: center;
+            padding: 4rem 2rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .home-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .home-section p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        .notification-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .notification-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .product-id {
+            font-weight: 600;
+            color: var(--accent);
+            font-size: 0.95rem;
+        }
+
+        .timestamp {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .notification-content {
+            margin-bottom: 1.5rem;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid rgba(71, 85, 105, 0.3);
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        .info-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .error-value {
+            color: var(--danger);
+            font-weight: 700;
+        }
+
+        .countdown {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 0.5rem;
+            margin: 1rem 0;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+
+        .countdown-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--danger);
+            animation: pulse 1s infinite;
+        }
+
+        .countdown-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        button {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-accept {
+            background: var(--success);
+            color: white;
+            border-color: var(--success);
+        }
+
+        .btn-accept:hover:not(:disabled) {
+            background: #059669;
+        }
+
+        .btn-reject {
+            background: var(--danger);
+            color: white;
+            border-color: var(--danger);
+        }
+
+        .btn-reject:hover:not(:disabled) {
+            background: #dc2626;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            color: var(--bg-tertiary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-state p {
+            font-size: 1.1rem;
+        }
+
+        .history-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-info {
+            flex: 1;
+        }
+
+        .history-id {
+            font-weight: 600;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+
+        .history-details {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.25rem;
+        }
+
+        .history-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        .status-accepted {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--success);
+        }
+
+        .status-rejected {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        footer {
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
 </head>
 <body>
-    <h1>esta es la pagina</h1>
+    <header>
+        <div class="logo">
+            <i class="ti ti-checklist"></i>
+            <span>Control de Calidad</span>
+        </div>
+        <div class="connection-status">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">Desconectado</span>
+        </div>
+    </header>
+
+    <nav>
+        <button class="nav-btn active" data-section="home">
+            <i class="ti ti-home"></i>
+            Home
+        </button>
+        <button class="nav-btn" data-section="notifications">
+            <i class="ti ti-bell"></i>
+            Notificaciones
+        </button>
+        <button class="nav-btn" data-section="history">
+            <i class="ti ti-history"></i>
+            Historial
+        </button>
+    </nav>
+
+    <main>
+        <!-- HOME SECTION -->
+        <section id="home" class="section active home-section">
+            <h1>Bienvenido</h1>
+            <p>Sistema de Control de Calidad con RFID</p>
+            <p style="font-size: 0.95rem; margin-top: 2rem;">Los productos rechazados aparecerán en la sección de Notificaciones</p>
+        </section>
+
+        <!-- NOTIFICATIONS SECTION -->
+        <section id="notifications" class="section">
+            <div id="notificationsList" class="notification-grid"></div>
+            <div id="noNotifications" class="empty-state" style="display: none;">
+                <i class="ti ti-inbox"></i>
+                <p>No hay notificaciones pendientes</p>
+            </div>
+        </section>
+
+        <!-- HISTORY SECTION -->
+        <section id="history" class="section">
+            <div id="historyList"></div>
+            <div id="noHistory" class="empty-state" style="display: none;">
+                <i class="ti ti-history-off"></i>
+                <p>No hay histórico aún</p>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>Sistema de Control de Calidad • v1.0</p>
+    </footer>
+
+    <script>
+        const wsUrl = `ws://${window.location.hostname}:${window.location.port || 8080}`;
+        let ws = null;
+        let notifications = [];
+        let history = [];
+
+        // WebSocket Connection
+        function connectWebSocket() {
+            try {
+                ws = new WebSocket(wsUrl);
+                
+                ws.onopen = () => {
+                    console.log('Conectado al servidor');
+                    updateConnectionStatus(true);
+                };
+
+                ws.onmessage = (event) => {
+                    const data = JSON.parse(event.data);
+                    handleMessage(data);
+                };
+
+                ws.onerror = (error) => {
+                    console.error('Error WebSocket:', error);
+                    updateConnectionStatus(false);
+                };
+
+                ws.onclose = () => {
+                    console.log('Desconectado del servidor');
+                    updateConnectionStatus(false);
+                    setTimeout(connectWebSocket, 3000);
+                };
+            } catch (error) {
+                console.error('Error al conectar:', error);
+                updateConnectionStatus(false);
+            }
+        }
+
+        function updateConnectionStatus(connected) {
+            const dot = document.getElementById('statusDot');
+            const text = document.getElementById('statusText');
+            
+            if (connected) {
+                dot.classList.add('connected');
+                text.textContent = 'Conectado';
+            } else {
+                dot.classList.remove('connected');
+                text.textContent = 'Desconectado';
+            }
+        }
+
+        function handleMessage(data) {
+            if (data.type === 'product_rejection') {
+                addNotification(data);
+            }
+        }
+
+        function addNotification(data) {
+            const notification = {
+                id: data.product_id,
+                height_error: data.height_error,
+                timestamp: new Date(),
+                countdown: 30,
+                processed: false
+            };
+            
+            notifications.push(notification);
+            renderNotifications();
+            
+            // Start countdown
+            startCountdown(notification.id);
+        }
+
+        function startCountdown(productId) {
+            const notification = notifications.find(n => n.id === productId);
+            if (!notification) return;
+
+            const interval = setInterval(() => {
+                notification.countdown--;
+                
+                const card = document.querySelector(`[data-product-id="${productId}"]`);
+                if (card) {
+                    const countdownNum = card.querySelector('.countdown-number');
+                    if (countdownNum) {
+                        countdownNum.textContent = notification.countdown;
+                    }
+                }
+
+                if (notification.countdown <= 0) {
+                    clearInterval(interval);
+                    if (!notification.processed) {
+                        autoReject(productId);
+                    }
+                }
+            }, 1000);
+        }
+
+        function renderNotifications() {
+            const container = document.getElementById('notificationsList');
+            const empty = document.getElementById('noNotifications');
+
+            if (notifications.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.innerHTML = notifications
+                .filter(n => !n.processed)
+                .map(n => `
+                    <div class="notification-card" data-product-id="${n.id}">
+                        <div class="notification-header">
+                            <span class="product-id">ID: ${n.id}</span>
+                            <span class="timestamp">${n.timestamp.toLocaleTimeString()}</span>
+                        </div>
+                        
+                        <div class="notification-content">
+                            <div class="info-row">
+                                <span class="info-label">Error de altura:</span>
+                                <span class="info-value error-value">${(n.height_error).toFixed(2)}mm</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Estado:</span>
+                                <span class="info-value">Pendiente revisión</span>
+                            </div>
+                        </div>
+
+                        <div class="countdown">
+                            <div class="countdown-number">${n.countdown}</div>
+                            <div class="countdown-text">segundos para rechazo automático</div>
+                        </div>
+
+                        <div class="button-group">
+                            <button class="btn-accept" onclick="acceptProduct('${n.id}')">
+                                <i class="ti ti-check"></i>
+                                Aceptar
+                            </button>
+                            <button class="btn-reject" onclick="rejectProduct('${n.id}')">
+                                <i class="ti ti-x"></i>
+                                Rechazar
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        function acceptProduct(productId) {
+            const notification = notifications.find(n => n.id === productId);
+            if (notification) {
+                notification.processed = true;
+                sendDecision(productId, 'accepted');
+                addToHistory(productId, 'Aceptado');
+                renderNotifications();
+            }
+        }
+
+        function rejectProduct(productId) {
+            const notification = notifications.find(n => n.id === productId);
+            if (notification) {
+                notification.processed = true;
+                sendDecision(productId, 'rejected');
+                addToHistory(productId, 'Rechazado');
+                renderNotifications();
+            }
+        }
+
+        function autoReject(productId) {
+            const notification = notifications.find(n => n.id === productId);
+            if (notification && !notification.processed) {
+                notification.processed = true;
+                sendDecision(productId, 'auto_rejected');
+                addToHistory(productId, 'Rechazado automáticamente');
+                renderNotifications();
+            }
+        }
+
+        function sendDecision(productId, decision) {
+            const data = {
+                type: 'decision',
+                product_id: productId,
+                decision: decision,
+                timestamp: new Date().toISOString()
+            };
+
+            if (ws && ws.readyState === WebSocket.OPEN) {
+                ws.send(JSON.stringify(data));
+                console.log('Decisión enviada:', data);
+            } else {
+                console.warn('WebSocket no conectado, intentando reconectar...');
+                connectWebSocket();
+            }
+        }
+
+        function addToHistory(productId, decision) {
+            history.unshift({
+                id: productId,
+                decision: decision,
+                timestamp: new Date()
+            });
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const container = document.getElementById('historyList');
+            const empty = document.getElementById('noHistory');
+
+            if (history.length === 0) {
+                container.innerHTML = '';
+                empty.style.display = 'block';
+                return;
+            }
+
+            empty.style.display = 'none';
+            container.innerHTML = history.map(h => {
+                const isAccepted = h.decision === 'Aceptado';
+                const statusClass = isAccepted ? 'status-accepted' : 'status-rejected';
+                const statusText = isAccepted ? 'Aceptado' : 'Rechazado';
+
+                return `
+                    <div class="history-card">
+                        <div class="history-info">
+                            <div class="history-id">ID: ${h.id}</div>
+                            <div class="history-details">
+                                ${h.timestamp.toLocaleString()}
+                            </div>
+                            <span class="history-status ${statusClass}">${h.decision}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Navigation
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+                
+                btn.classList.add('active');
+                const sectionId = btn.dataset.section;
+                document.getElementById(sectionId).classList.add('active');
+            });
+        });
+
+        // Initialize
+        connectWebSocket();
+        
+        // Simular notificación de prueba (comentar después de probar)
+        setTimeout(() => {
+            addNotification({
+                product_id: 'RFID-001',
+                height_error: 2.5,
+                type: 'product_rejection'
+            });
+        }, 2000);
+    </script>
 </body>
 </html>
