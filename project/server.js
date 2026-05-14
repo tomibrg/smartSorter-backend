@@ -1,7 +1,18 @@
 const mqtt = require("mqtt")
 const { Client } = require("pg")
+const express = require("express")
+const http = require("http")
+const WebSocket = require("ws")
 // const { MongoClient } = require("mongodb")
 require("dotenv").config()
+
+// 🔹 Express + HTTP + WebSocket
+const app = express()
+const server = http.createServer(app)
+const wss = new WebSocket.Server({ server })
+
+// Servir archivos estáticos (la página HTML)
+app.use(express.static("public"))
 
 // 🔹 MQTT (está en la misma EC2 pública)
 const stringPghost = process.env.PG_HOST;
@@ -19,6 +30,36 @@ mqttClient.on("offline", () => {
 
 mqttClient.on("error", (err) => {
   console.error("❌ MQTT error:", err)
+})
+
+// 🔹 WebSocket - Manejar conexiones del front
+wss.on("connection", (ws) => {
+  console.log("✅ Cliente web conectado")
+  
+  ws.on("message", async (message) => {
+    try {
+      const data = JSON.parse(message)
+      
+      if (data.type === "decision") {
+        console.log("📨 Decisión recibida del operador:", data)
+        
+        // 📡 Enviar resultado al ESP vía MQTT
+        const mqttMessage = {
+          objectId: data.product_id,
+          result: data.decision === "accepted" ? "ACCEPT" : "REJECT"
+        }
+        
+        mqttClient.publish("factory/result", JSON.stringify(mqttMessage))
+        console.log("📤 Enviado al ESP:", mqttMessage)
+      }
+    } catch (err) {
+      console.error("Error en WebSocket:", err)
+    }
+  })
+  
+  ws.on("close", () => {
+    console.log("⚠️ Cliente web desconectado")
+  })
 })
 
 // const mongoClient = new MongoClient("mongodb://" + stringPghost + ":27017")
@@ -89,11 +130,31 @@ async function start() {
       //   timestamp: new Date()
       // })
 
-      // 📡 Publicar respuesta
-      mqttClient.publish(
-        "factory/result",
-        JSON.stringify({ objectId, result })
-      )
+      // ❌ Si es RECHAZO, notificar al operador en el front
+      if (result === "REJECT") {
+        const heightError = Math.abs(measuredHeight - expected)
+        
+        console.log("⚠️ Producto rechazado - Notificando al operador")
+        
+        // Enviar a todos los clientes WebSocket conectados
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: "product_rejection",
+              product_id: objectId,
+              height_error: heightError,
+              measured: measuredHeight,
+              expected: expected
+            }))
+          }
+        })
+      } else {
+        // ✅ Si es aceptado automáticamente, publicar al ESP directamente
+        mqttClient.publish(
+          "factory/result",
+          JSON.stringify({ objectId, result })
+        )
+      }
 
     } catch (err) {
       console.error("Error:", err)
@@ -102,3 +163,9 @@ async function start() {
 }
 
 start()
+
+// 🔹 Iniciar servidor en puerto 8000
+const PORT = process.env.PORT || 8000
+server.listen(PORT, () => {
+  console.log(`🚀 Servidor escuchando en puerto ${PORT}`)
+})
