@@ -16,7 +16,6 @@ app.use(express.static("public"))
 
 // 🔹 MQTT (está en la misma EC2 pública)
 const stringPghost = process.env.PG_HOST;
-console.log(stringPghost);
 
 const mqttClient = mqtt.connect("mqtt://localhost:1883")
 mqttClient.on("connect", () => {
@@ -42,6 +41,8 @@ wss.on("connection", (ws) => {
       
       if (data.type === "decision") {
         console.log("📨 Decisión recibida del operador:", data)
+
+        await wrtieLogInDB(data.product_id, (data.decision === "accepted"? 1: 2),(data.measuredHeight < 0? 1: 2))
         
         // 📡 Enviar resultado al ESP vía MQTT
         const mqttMessage = {
@@ -120,6 +121,8 @@ async function start() {
 
       const result = isValid ? "ACCEPT" : "REJECT"
 
+
+
       console.log("Resultado:", result)
 
       // await logsCollection.insertOne({
@@ -132,7 +135,7 @@ async function start() {
 
       // ❌ Si es RECHAZO, notificar al operador en el front
       if (result === "REJECT") {
-        const heightError = Math.abs(measuredHeight - expected)
+        const heightError = measuredHeight - expected
         
         console.log("⚠️ Producto rechazado - Notificando al operador")
         
@@ -150,6 +153,8 @@ async function start() {
         })
       } else {
         // ✅ Si es aceptado automáticamente, publicar al ESP directamente
+        await wrtieLogInDB(objectId, 1, 3)
+
         mqttClient.publish(
           "factory/result",
           JSON.stringify({ objectId, result })
@@ -169,3 +174,11 @@ const PORT = process.env.PORT || 8000
 server.listen(PORT, () => {
   console.log(`🚀 Servidor escuchando en puerto ${PORT}`)
 })
+
+
+async function wrtieLogInDB(objectId, resultId, motiveId) {
+  await pgClient.query(`INSERT INTO results (id_obj, id_res, id_mot) VALUES ($1, $2, $3)`, 
+    [objectId, resultId, motiveId])
+
+    console.log(`Log guardado: el objeto resulto ${result}`)
+}
