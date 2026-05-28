@@ -180,5 +180,5 @@ async function wrtieLogInDB(objectId, resultId, motiveId) {
   await pgClient.query(`INSERT INTO results (id_obj, id_res, id_mot) VALUES ($1, $2, $3)`, 
     [objectId, resultId, motiveId])
 
-    console.log(`Log guardado: el objeto resulto ${result}`)
+    console.log(`Log guardado: el objeto resulto ${objectId, resultId, motiveId}`)
 }
