@@ -499,6 +499,7 @@
             const uniqueId = `${data.product_id}-${Date.now()}`;
             const notification = {
                 id: uniqueId,
+                product_id: data.product_id,
                 height_error: data.height_error,
                 timestamp: new Date(),
                 countdown: 30,
@@ -593,8 +594,7 @@
             const notification = notifications.find(n => n.id === productId);
             if (notification) {
                 notification.processed = true;
-                cleanId = mapProductIdWithoutDate(productId);
-                sendDecision(cleanId, 'accepted');
+                sendDecision(notification.product_id, 'accepted');
                 addToHistory(productId, 'Aceptado');
                 setTimeout(() => renderNotifications(), 100);
             }
@@ -604,8 +604,7 @@
             const notification = notifications.find(n => n.id === productId);
             if (notification) {
                 notification.processed = true;
-                cleanId = mapProductIdWithoutDate(productId);
-                sendDecision(cleanId, 'rejected');
+                sendDecision(notification.product_id, 'rejected');
                 addToHistory(productId, 'Rechazado');
                 setTimeout(() => renderNotifications(), 100);
             }
@@ -615,15 +614,10 @@
             const notification = notifications.find(n => n.id === productId);
             if (notification && !notification.processed) {
                 notification.processed = true;
-                cleanId = mapProductIdWithoutDate(productId);
-                sendDecision(cleanId, 'auto_rejected');
+                sendDecision(notification.product_id, 'auto_rejected');
                 addToHistory(productId, 'Rechazado automáticamente');
                 setTimeout(() => renderNotifications(), 100);
             }
-        }
-
-        function mapProductIdWithoutDate(productId){
-            return productId.replace(/-\d+$/, '')
         }
 
         function sendDecision(productId, decision) {
