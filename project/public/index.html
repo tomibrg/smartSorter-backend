@@ -593,7 +593,8 @@
             const notification = notifications.find(n => n.id === productId);
             if (notification) {
                 notification.processed = true;
-                sendDecision(productId, 'accepted');
+                cleanId = mapProductIdWithoutDate(productId);
+                sendDecision(cleanId, 'accepted');
                 addToHistory(productId, 'Aceptado');
                 setTimeout(() => renderNotifications(), 100);
             }
@@ -603,7 +604,8 @@
             const notification = notifications.find(n => n.id === productId);
             if (notification) {
                 notification.processed = true;
-                sendDecision(productId, 'rejected');
+                cleanId = mapProductIdWithoutDate(productId);
+                sendDecision(cleanId, 'rejected');
                 addToHistory(productId, 'Rechazado');
                 setTimeout(() => renderNotifications(), 100);
             }
@@ -613,10 +615,15 @@
             const notification = notifications.find(n => n.id === productId);
             if (notification && !notification.processed) {
                 notification.processed = true;
-                sendDecision(productId, 'auto_rejected');
+                cleanId = mapProductIdWithoutDate(productId);
+                sendDecision(cleanId, 'auto_rejected');
                 addToHistory(productId, 'Rechazado automáticamente');
                 setTimeout(() => renderNotifications(), 100);
             }
+        }
+
+        function mapProductIdWithoutDate(productId){
+            return productId.replace(/-\d+$/, '')
         }
 
         function sendDecision(productId, decision) {
