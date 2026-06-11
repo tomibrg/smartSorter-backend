@@ -662,7 +662,7 @@
             container.innerHTML = history.map(h => {
                 const isAccepted = h.id_res === 1;
                 const statusClass = isAccepted ? 'status-accepted' : 'status-rejected';
-                const label = h.result_name || (isAccepted ? 'Aceptado' : 'Rechazado');
+                const label = isAccepted ? 'Aceptado' : 'Rechazado';
                 const objName = h.object_name || `ID: ${h.id_obj}`;
                 const motive = h.motive_name ? `• ${h.motive_name}` : '';
 
