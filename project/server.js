@@ -19,9 +19,9 @@ app.get("/api/history", async (req, res) => {
   try {
     const result = await pgClient.query(`
       SELECT r.primary_resut_id, r.id_obj, r.id_res, r.id_mot,
-             res.descripcion AS result_name,
-             m.descripcion AS motive_name,
-             o.nombre AS object_name
+             res.result AS result_name,
+             m.motive AS motive_name,
+             o.name AS object_name
       FROM results r
       LEFT JOIN result res ON r.id_res = res.id_res
       LEFT JOIN motive m ON r.id_mot = m.id_mot
