@@ -492,6 +492,8 @@
         function handleMessage(data) {
             if (data.type === 'product_rejection') {
                 addNotification(data);
+            } else if (data.type === 'decision_saved' || data.type === 'product_accepted') {
+                fetchHistory();
             }
         }
 
@@ -595,7 +597,6 @@
             if (notification) {
                 notification.processed = true;
                 sendDecision(notification.product_id, 'accepted');
-                addToHistory(productId, 'Aceptado');
                 setTimeout(() => renderNotifications(), 100);
             }
         }
@@ -605,7 +606,6 @@
             if (notification) {
                 notification.processed = true;
                 sendDecision(notification.product_id, 'rejected');
-                addToHistory(productId, 'Rechazado');
                 setTimeout(() => renderNotifications(), 100);
             }
         }
@@ -615,7 +615,6 @@
             if (notification && !notification.processed) {
                 notification.processed = true;
                 sendDecision(notification.product_id, 'auto_rejected');
-                addToHistory(productId, 'Rechazado automáticamente');
                 setTimeout(() => renderNotifications(), 100);
             }
         }
@@ -637,13 +636,16 @@
             }
         }
 
-        function addToHistory(productId, decision) {
-            history.unshift({
-                id: productId,
-                decision: decision,
-                timestamp: new Date()
-            });
-            renderHistory();
+        async function fetchHistory() {
+            try {
+                const response = await fetch('/api/history');
+                if (response.ok) {
+                    history = await response.json();
+                    renderHistory();
+                }
+            } catch (err) {
+                console.error('Error fetching history:', err);
+            }
         }
 
         function renderHistory() {
@@ -658,18 +660,20 @@
 
             empty.style.display = 'none';
             container.innerHTML = history.map(h => {
-                const isAccepted = h.decision === 'Aceptado';
+                const isAccepted = h.id_res === 1;
                 const statusClass = isAccepted ? 'status-accepted' : 'status-rejected';
-                const statusText = isAccepted ? 'Aceptado' : 'Rechazado';
+                const label = h.result_name || (isAccepted ? 'Aceptado' : 'Rechazado');
+                const objName = h.object_name || `ID: ${h.id_obj}`;
+                const motive = h.motive_name ? `• ${h.motive_name}` : '';
 
                 return `
                     <div class="history-card">
                         <div class="history-info">
-                            <div class="history-id">ID: ${h.id}</div>
+                            <div class="history-id">${objName}</div>
                             <div class="history-details">
-                                ${h.timestamp.toLocaleString()}
+                                ID: ${h.id_obj} ${motive}
                             </div>
-                            <span class="history-status ${statusClass}">${h.decision}</span>
+                            <span class="history-status ${statusClass}">${label}</span>
                         </div>
                     </div>
                 `;
@@ -690,6 +694,8 @@
 
         // Initialize
         connectWebSocket();
+        fetchHistory();
+        setInterval(fetchHistory, 30000);
     </script>
 </body>
 </html>

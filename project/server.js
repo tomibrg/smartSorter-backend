@@ -14,6 +14,28 @@ const wss = new WebSocket.Server({ server })
 // Servir archivos estáticos (la página HTML)
 app.use(express.static("public"))
 
+// 🔹 API - Historial desde PostgreSQL
+app.get("/api/history", async (req, res) => {
+  try {
+    const result = await pgClient.query(`
+      SELECT r.primary_resut_id, r.id_obj, r.id_res, r.id_mot,
+             res.descripcion AS result_name,
+             m.descripcion AS motive_name,
+             o.nombre AS object_name
+      FROM results r
+      LEFT JOIN result res ON r.id_res = res.id_res
+      LEFT JOIN motive m ON r.id_mot = m.id_mot
+      LEFT JOIN object o ON r.id_obj = o.id_obj
+      ORDER BY r.primary_resut_id DESC
+      LIMIT 200
+    `)
+    res.json(result.rows)
+  } catch (err) {
+    console.error("Error fetching history:", err)
+    res.status(500).json({ error: "Error al obtener historial" })
+  }
+})
+
 // 🔹 MQTT (está en la misma EC2 pública)
 const stringPghost = process.env.PG_HOST;
 
@@ -44,6 +66,13 @@ wss.on("connection", (ws) => {
 
         await wrtieLogInDB(data.product_id, (data.decision === "accepted"? 1: 2),(data.measuredHeight < 0? 1: 2))
         
+        // Confirmar al frontend que se guardó
+        ws.send(JSON.stringify({
+          type: "decision_saved",
+          product_id: data.product_id,
+          decision: data.decision
+        }))
+
         // 📡 Enviar resultado al ESP vía MQTT
         const mqttMessage = {
           objectId: data.product_id,
@@ -154,6 +183,16 @@ async function start() {
       } else {
         // ✅ Si es aceptado automáticamente, publicar al ESP directamente
         await wrtieLogInDB(objectId, 1, 3)
+
+        // Notificar al frontend
+        wss.clients.forEach((client) => {
+          if (client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify({
+              type: "product_accepted",
+              product_id: objectId
+            }))
+          }
+        })
 
         mqttClient.publish(
           "factory/result",
