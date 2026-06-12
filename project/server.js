@@ -153,6 +153,7 @@ async function start() {
           }))
         }
       })
+      return 
     }
 
       const expected = res.rows[0].height
