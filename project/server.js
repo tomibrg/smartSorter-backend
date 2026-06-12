@@ -137,7 +137,7 @@ async function start() {
 
       if (res.rows.length === 0) {
         console.log("Objeto no encontrado")
-        wrtieLogInDB(objectId,2,4)
+        wrtieLogInDB('0',2,4)
         mqttClient.publish(
     "factory/result",
     JSON.stringify({ objectId, result: "REJECT" })
