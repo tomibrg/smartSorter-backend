@@ -137,23 +137,12 @@ async function start() {
 
       if (res.rows.length === 0) {
         console.log("Objeto no encontrado")
+        wrtieLogInDB(objectId,2,4)
         mqttClient.publish(
     "factory/result",
     JSON.stringify({ objectId, result: "REJECT" })
   )
-  wss.clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({
-        type: "product_rejection",
-        product_id: objectId,
-        height_error: 0,
-        measured: 0,
-        expected: 0,
-        reason: "Objeto no encontrado en base de datos"
-          }))
-        }
-      })
-      return 
+  return
     }
 
       const expected = res.rows[0].height
